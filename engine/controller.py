@@ -103,15 +103,16 @@ class Controller:
     @classmethod
     def round_skip(cls, state: State):
         state.round_skip_count += 1
+        cls.choose_next_president(state=state)
+        state.current_chancellor = None
+        state.president_choice_cards = None
+        state.chancellor_choice_cards = None
         if state.round_skip_count < 3:
-            cls.next_turn(state=state)
+            state.phase = Phase.CHOOSE_CHANCELLOR
+            state.turn += 1
         else:
-            cls.choose_next_president(state=state)
-            state.current_chancellor = None
             state.previous_president = None
             state.previous_chancellor = None
-            state.president_choice_cards = None
-            state.chancellor_choice_cards = None
             assert state.deck is not None
             new_law = state.deck.pop()
             state.deck_size -= 1
@@ -129,7 +130,7 @@ class Controller:
             else:
                 state.phase = Phase.CHOOSE_CHANCELLOR
                 state.turn += 1
-            state.round_skip_count = 0
+                state.round_skip_count = 0
 
     @classmethod
     def hide_from_player(cls, source_state: State, player_index: int, player_role: Role) -> State:
