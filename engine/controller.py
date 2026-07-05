@@ -97,8 +97,6 @@ class Controller:
     @classmethod
     def round_skip(cls, state: State):
         state.round_skip_count += 1
-        state.president_choice_cards = None
-        state.chancellor_choice_cards = None
         if state.round_skip_count < 3:
             cls.next_turn(state=state)
         else:
@@ -106,6 +104,8 @@ class Controller:
             state.current_chancellor = None
             state.previous_president = None
             state.previous_chancellor = None
+            state.president_choice_cards = None
+            state.chancellor_choice_cards = None
             assert state.deck is not None
             new_law = state.deck.pop()
             state.deck_size -= 1
@@ -121,6 +121,7 @@ class Controller:
             else:
                 state.phase = Phase.CHOOSE_CHANCELLOR
                 state.turn += 1
+            state.round_skip_count = 0
 
     @classmethod
     def hide_from_player(cls, source_state: State, player_index: int, player_role: Role) -> State:
@@ -249,6 +250,7 @@ class Controller:
                 assert action.chancellor_index != current_state.current_president
                 assert action.chancellor_index != current_state.previous_president
                 assert action.chancellor_index != current_state.previous_chancellor
+                assert action.chancellor_index not in current_state.killed_players
 
                 new_state.current_chancellor = action.chancellor_index
                 new_state.phase = Phase.VOTE
@@ -275,18 +277,22 @@ class Controller:
                     if current_state.fascist_score() >= 3 and current_state.hitler_is_chancellor():
                         new_state.winner_team = Team.FASCIST
                         new_state.phase = Phase.GAME_ENDED
-                    new_state.phase = Phase.PRESIDENT_DISCARD
-                    assert new_state.deck is not None
-                    assert new_state.deck_size >= 3
-                    president_choice_cards: list[LawType] = []
-                    for i in range(3):
-                        president_choice_cards.append(new_state.deck.pop())
-                    random.shuffle(president_choice_cards)
-                    new_state.president_choice_cards = president_choice_cards
-                    new_state.deck_size -= 3
-                    if new_state.deck_size <= 2:
-                        cls.reshuffle_deck(state=new_state)
-                    new_state.round_skip_count = 0
+                    else:
+                        if current_state.fascist_score() >= 3:
+                            if current_state.current_chancellor not in new_state.not_hitler_players:
+                                new_state.not_hitler_players.append(current_state.current_chancellor)
+                        new_state.phase = Phase.PRESIDENT_DISCARD
+                        assert new_state.deck is not None
+                        assert new_state.deck_size >= 3
+                        president_choice_cards: list[LawType] = []
+                        for i in range(3):
+                            president_choice_cards.append(new_state.deck.pop())
+                        random.shuffle(president_choice_cards)
+                        new_state.president_choice_cards = president_choice_cards
+                        new_state.deck_size -= 3
+                        if new_state.deck_size <= 2:
+                            cls.reshuffle_deck(state=new_state)
+                        new_state.round_skip_count = 0
                 else:
                     cls.round_skip(state=new_state)
 
@@ -424,6 +430,9 @@ class Controller:
                 assert isinstance(action, TeamCheckAction)
                 print(f"Player {action.player_index} phase {action.phase}, target_index = {action.target_index}")
                 assert action.player_index == current_state.current_president
+                assert action.target_index not in current_state.killed_players
+                for team_claim in current_state.team_claims:
+                    assert action.target_index != team_claim.target_index
                 new_state.team_claims.append(TeamClaim(
                     turn=current_state.turn,
                     president_index=current_state.current_president,
@@ -451,6 +460,7 @@ class Controller:
                 print(f"Player {action.player_index} phase {action.phase}, "
                       f"out_of_order_president_index = {action.out_of_order_president_index}")
                 assert action.out_of_order_president_index != current_state.current_president
+                assert action.out_of_order_president_index not in current_state.killed_players
                 cls.next_turn(state=new_state)
                 new_state.is_out_of_order_presidency = True
                 new_state.current_president = action.out_of_order_president_index
@@ -463,6 +473,9 @@ class Controller:
                 assert action.target_index != current_state.current_president
                 assert action.target_index not in current_state.killed_players
                 new_state.killed_players.append(action.target_index)
+                if action.target_index == current_state.hitler_index():
+                    new_state.winner_team = Team.LIBERAL
+                    new_state.phase = Phase.GAME_ENDED
                 cls.next_turn(state=new_state)
 
             case Phase.GAME_ENDED:

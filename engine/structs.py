@@ -141,9 +141,11 @@ class State:
     def alive_players(self) -> list[int]:
         return [x for x in range(self.player_count) if x not in self.killed_players]
 
-    def hitler_is_chancellor(self) -> int:
-        hitler_index = self.roles.index(Role.HITLER)
-        return self.current_chancellor == hitler_index
+    def hitler_index(self) -> int:
+        return self.roles.index(Role.HITLER)
+
+    def hitler_is_chancellor(self) -> bool:
+        return self.current_chancellor == self.hitler_index()
 
     def get_team(self, player_index: int) -> Team:
         assert 0 <= player_index < self.player_count
