@@ -7,6 +7,7 @@ from .action import ChancellorDiscardAction
 from .action import ChancellorVetoAction
 from .action import ChooseChancellorAction
 from .action import ChooseOutOfOrderPresidentAction
+from .action import DeckCheckAction
 from .action import KillAction
 from .action import LawClaimAction
 from .action import PresidentDiscardAction
@@ -194,6 +195,14 @@ class DummyPlayer(Player):
 
                 return TeamClaimAction(
                     team=team,
+                    **action_kwargs,
+                )
+
+            case Phase.DECK_CHECK:
+                assert state.deck_claim is not None
+                assert state.deck_claim.real_top_three_cards is not None
+                return DeckCheckAction(
+                    top_three_cards=list(state.deck_claim.real_top_three_cards),
                     **action_kwargs,
                 )
 

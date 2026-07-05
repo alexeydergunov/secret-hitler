@@ -7,6 +7,7 @@ from .action import ChancellorDiscardAction
 from .action import ChancellorVetoAction
 from .action import ChooseChancellorAction
 from .action import ChooseOutOfOrderPresidentAction
+from .action import DeckCheckAction
 from .action import KillAction
 from .action import LawClaimAction
 from .action import PresidentDiscardAction
@@ -15,6 +16,7 @@ from .action import TeamCheckAction
 from .action import TeamClaimAction
 from .action import VoteAction
 from .player import Player
+from .structs import DeckClaim
 from .structs import LawClaim
 from .structs import LawType
 from .structs import Phase
@@ -85,7 +87,10 @@ class Controller:
         cls.choose_next_president(state=state)
         state.current_chancellor = None
         state.previous_president = previous_president
-        state.previous_chancellor = previous_chancellor
+        if len(state.alive_players()) <= 5:
+            state.previous_chancellor = None
+        else:
+            state.previous_chancellor = previous_chancellor
 
         state.president_choice_cards = None
         state.chancellor_choice_cards = None
@@ -129,7 +134,10 @@ class Controller:
 
         state.self_index = player_index
 
-        if player_role in (Role.LIBERAL, Role.HITLER):
+        not_knowing_roles = {Role.LIBERAL}
+        if state.player_count >= 7:
+            not_knowing_roles.add(Role.HITLER)
+        if player_role in not_knowing_roles:
             for i in range(len(state.roles)):
                 if i != player_index:
                     state.roles[i] = Role.UNKNOWN
@@ -153,12 +161,17 @@ class Controller:
             if team_claim.president_index != player_index:
                 team_claim.real_team = None
 
+        if state.deck_claim is not None:
+            if state.deck_claim.president_index != player_index:
+                state.deck_claim.real_top_three_cards = None
+
         return state
 
     def init_new_game(self, players: list[Player]):
         random.seed(time.time_ns())
 
         player_count = len(players)
+        assert 5 <= player_count <= 10
         roles = self.get_shuffled_roles(player_count=player_count)
         first_president = random.randrange(0, player_count)
         print(f"Roles: {roles}, first president: {first_president}")
@@ -189,6 +202,7 @@ class Controller:
             round_votes=[],
             law_claims=[],
             team_claims=[],
+            deck_claim=None,
             winner_team=None,
         )
 
@@ -417,6 +431,14 @@ class Controller:
                     ))
                 if new_state.is_team_check_active():
                     new_state.phase = Phase.TEAM_CHECK
+                elif new_state.is_deck_check_active():
+                    new_state.deck_claim = DeckClaim(
+                        turn=current_state.turn,
+                        president_index=current_state.current_president,
+                        top_three_cards=None,
+                        real_top_three_cards=current_state.top_three_cards(),
+                    )
+                    new_state.phase = Phase.DECK_CHECK
                 elif new_state.is_choose_out_of_order_president_active():
                     new_state.phase = Phase.CHOOSE_OUT_OF_ORDER_PRESIDENT
                 elif new_state.is_kill_active():
@@ -451,6 +473,17 @@ class Controller:
                 last_claim = new_state.team_claims[-1]
                 assert last_claim.turn == current_state.turn
                 last_claim.team = action.team
+                cls.next_turn(state=new_state)
+
+            case Phase.DECK_CHECK:
+                assert len(actions) == 1
+                action = actions[0]
+                assert isinstance(action, DeckCheckAction)
+                print(f"Player {action.player_index} phase {action.phase}, top_three_cards = {action.top_three_cards}")
+                assert action.player_index == current_state.current_president
+                assert len(action.top_three_cards) == 3
+                assert current_state.deck_claim is not None
+                new_state.deck_claim.top_three_cards = action.top_three_cards
                 cls.next_turn(state=new_state)
 
             case Phase.CHOOSE_OUT_OF_ORDER_PRESIDENT:
@@ -518,6 +551,11 @@ class Controller:
                 if player_index != current_state.current_president:
                     return None
                 if not current_state.is_team_check_active():
+                    return None
+            case Phase.DECK_CHECK:
+                if player_index != current_state.current_president:
+                    return None
+                if not current_state.is_deck_check_active():
                     return None
             case Phase.CHOOSE_OUT_OF_ORDER_PRESIDENT:
                 if player_index != current_state.current_president:

@@ -69,6 +69,12 @@ class TeamClaimAction(Action):
 
 
 @dataclasses.dataclass
+class DeckCheckAction(Action):
+    phase = Phase.DECK_CHECK
+    top_three_cards: list[LawType]
+
+
+@dataclasses.dataclass
 class ChooseOutOfOrderPresidentAction(Action):
     phase = Phase.CHOOSE_OUT_OF_ORDER_PRESIDENT
     out_of_order_president_index: int

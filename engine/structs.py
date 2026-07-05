@@ -40,9 +40,10 @@ class Phase(EnumParent):
     LAW_CLAIM = 6
     TEAM_CHECK = 7
     TEAM_CLAIM = 8
-    CHOOSE_OUT_OF_ORDER_PRESIDENT = 9
-    KILL = 10
-    GAME_ENDED = 11
+    DECK_CHECK = 9
+    CHOOSE_OUT_OF_ORDER_PRESIDENT = 10
+    KILL = 11
+    GAME_ENDED = 12
 
 
 class Vote(EnumParent):
@@ -79,6 +80,14 @@ class TeamClaim:
 
 
 @dataclasses.dataclass
+class DeckClaim:
+    turn: int
+    president_index: int
+    top_three_cards: list[LawType] | None
+    real_top_three_cards: list[LawType] | None
+
+
+@dataclasses.dataclass
 class State:
     player_count: int
     self_index: int | None
@@ -102,6 +111,7 @@ class State:
     round_votes: list[RoundVote]
     law_claims: list[LawClaim]
     team_claims: list[TeamClaim]
+    deck_claim: DeckClaim | None
     winner_team: Team | None
 
     def liberal_score(self) -> int:
@@ -123,6 +133,12 @@ class State:
                 return True
         return False
 
+    def is_deck_check_active(self) -> bool:
+        if self.last_accepted_law() == LawType.RED:
+            if self.player_count in {5, 6} and self.fascist_score() == 3:
+                return True
+        return False
+
     def is_choose_out_of_order_president_active(self) -> bool:
         if self.last_accepted_law() == LawType.RED:
             if self.player_count in {7, 8, 9, 10} and self.fascist_score() == 3:
@@ -137,6 +153,15 @@ class State:
 
     def is_veto_active(self) -> bool:
         return self.fascist_score() == 5
+
+    def top_three_cards(self) -> list[LawType]:
+        assert self.deck is not None
+        assert len(self.deck) >= 3
+        return [
+            self.deck[-1],
+            self.deck[-2],
+            self.deck[-3],
+        ]
 
     def alive_players(self) -> list[int]:
         return [x for x in range(self.player_count) if x not in self.killed_players]
