@@ -26,6 +26,7 @@ from .structs import State
 from .structs import Team
 from .structs import TeamClaim
 from .structs import Vote
+from .structs import WinReason
 
 
 class Controller:
@@ -119,9 +120,11 @@ class Controller:
                 cls.reshuffle_deck(state=state)
             if state.liberal_score() == 5:
                 state.winner_team = Team.LIBERAL
+                state.win_reason = WinReason.LIBERAL_LAWS
                 state.phase = Phase.GAME_ENDED
             elif state.fascist_score() == 6:
                 state.winner_team = Team.FASCIST
+                state.win_reason = WinReason.FASCIST_LAWS
                 state.phase = Phase.GAME_ENDED
             else:
                 state.phase = Phase.CHOOSE_CHANCELLOR
@@ -204,6 +207,7 @@ class Controller:
             team_claims=[],
             deck_claim=None,
             winner_team=None,
+            win_reason=None,
         )
 
         self.players = players
@@ -216,7 +220,7 @@ class Controller:
             if current_state.phase == Phase.GAME_ENDED:
                 print(f"Game ended with score: "
                       f"Blue {current_state.liberal_score()}, Red {current_state.fascist_score()}, "
-                      f"Winner: {current_state.winner_team}")
+                      f"Winner: {current_state.winner_team}, Win reason: {current_state.win_reason}")
                 break
             self.preform_next_turn()
 
@@ -290,6 +294,7 @@ class Controller:
                 if len([x for x in votes if x == Vote.YES]) > len(alive_players) // 2:
                     if current_state.fascist_score() >= 3 and current_state.hitler_is_chancellor():
                         new_state.winner_team = Team.FASCIST
+                        new_state.win_reason = WinReason.HITLER_CHANCELLOR
                         new_state.phase = Phase.GAME_ENDED
                     else:
                         if current_state.fascist_score() >= 3:
@@ -380,9 +385,11 @@ class Controller:
 
                 if new_state.liberal_score() == 5:
                     new_state.winner_team = Team.LIBERAL
+                    new_state.win_reason = WinReason.LIBERAL_LAWS
                     new_state.phase = Phase.GAME_ENDED
                 elif new_state.fascist_score() == 6:
                     new_state.winner_team = Team.FASCIST
+                    new_state.win_reason = WinReason.FASCIST_LAWS
                     new_state.phase = Phase.GAME_ENDED
                 else:
                     new_state.phase = Phase.LAW_CLAIM
@@ -508,13 +515,21 @@ class Controller:
                 new_state.killed_players.append(action.target_index)
                 if action.target_index == current_state.hitler_index():
                     new_state.winner_team = Team.LIBERAL
+                    new_state.win_reason = WinReason.HITLER_KILLED
                     new_state.phase = Phase.GAME_ENDED
-                cls.next_turn(state=new_state)
+                elif new_state.is_fascist_majority():
+                    new_state.winner_team = Team.FASCIST
+                    new_state.win_reason = WinReason.FASCIST_MAJORITY
+                    new_state.phase = Phase.GAME_ENDED
+                else:
+                    cls.next_turn(state=new_state)
 
             case Phase.GAME_ENDED:
                 assert len(actions) == 0
                 assert current_state.winner_team is not None
-                print(f"Game ended in {current_state.turn} turns, winner is team {current_state.winner_team.name}")
+                print(f"Game ended in {current_state.turn} turns, "
+                      f"winner is team {current_state.winner_team}, "
+                      f"win reason {current_state.win_reason}")
 
             case _:
                 assert False

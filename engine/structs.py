@@ -52,6 +52,14 @@ class Vote(EnumParent):
     YES = 2
 
 
+class WinReason(EnumParent):
+    LIBERAL_LAWS = 0
+    HITLER_KILLED = 1
+    FASCIST_LAWS = 2
+    FASCIST_MAJORITY = 3
+    HITLER_CHANCELLOR = 4
+
+
 @dataclasses.dataclass
 class RoundVote:
     turn: int
@@ -113,6 +121,7 @@ class State:
     team_claims: list[TeamClaim]
     deck_claim: DeckClaim | None
     winner_team: Team | None
+    win_reason: WinReason | None
 
     def liberal_score(self) -> int:
         return len([x for x in self.accepted_laws if x == LawType.BLUE])
@@ -171,6 +180,12 @@ class State:
 
     def hitler_is_chancellor(self) -> bool:
         return self.current_chancellor == self.hitler_index()
+
+    def is_fascist_majority(self) -> bool:
+        alive_players = self.alive_players()
+        liberal_count = len([i for i in alive_players if self.roles[i] == Role.LIBERAL])
+        fascist_count = len([i for i in alive_players if self.roles[i] in {Role.FASCIST, Role.HITLER}])
+        return fascist_count > liberal_count
 
     def get_team(self, player_index: int) -> Team:
         assert 0 <= player_index < self.player_count
