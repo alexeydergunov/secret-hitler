@@ -40,7 +40,7 @@ class Controller:
     @classmethod
     def get_shuffled_roles(cls, player_count: int) -> list[Role]:
         roles: list[Role] = []
-        for i in range(player_count // 2 - 1):
+        for i in range((player_count - 1) // 2 - 1):
             roles.append(Role.FASCIST)
         roles.append(Role.HITLER)
         while len(roles) < player_count:
