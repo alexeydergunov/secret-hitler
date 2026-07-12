@@ -6,81 +6,81 @@ from .structs import Team
 from .structs import Vote
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class Action:
     turn: int
     phase: Phase
     player_index: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class ChooseChancellorAction(Action):
-    phase = Phase.CHOOSE_CHANCELLOR
+    phase: Phase = Phase.CHOOSE_CHANCELLOR
     chancellor_index: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class VoteAction(Action):
-    phase = Phase.VOTE
+    phase: Phase = Phase.VOTE
     vote: Vote
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class PresidentDiscardAction(Action):
-    phase = Phase.PRESIDENT_DISCARD
+    phase: Phase = Phase.PRESIDENT_DISCARD
     discarded_card: LawType
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class ChancellorVetoAction(Action):
-    phase = Phase.CHANCELLOR_VETO
+    phase: Phase = Phase.CHANCELLOR_VETO
     is_veto: bool
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class PresidentVetoAction(Action):
-    phase = Phase.PRESIDENT_VETO
+    phase: Phase = Phase.PRESIDENT_VETO
     is_veto: bool
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class ChancellorDiscardAction(Action):
-    phase = Phase.CHANCELLOR_DISCARD
+    phase: Phase = Phase.CHANCELLOR_DISCARD
     discarded_card: LawType
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class LawClaimAction(Action):
-    phase = Phase.LAW_CLAIM
+    phase: Phase = Phase.LAW_CLAIM
     received_cards: list[LawType] | None
     discarded_card: LawType | None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class TeamCheckAction(Action):
-    phase = Phase.TEAM_CHECK
+    phase: Phase = Phase.TEAM_CHECK
     target_index: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class TeamClaimAction(Action):
-    phase = Phase.TEAM_CLAIM
+    phase: Phase = Phase.TEAM_CLAIM
     team: Team
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class DeckCheckAction(Action):
-    phase = Phase.DECK_CHECK
+    phase: Phase = Phase.DECK_CHECK
     top_three_cards: list[LawType]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class ChooseOutOfOrderPresidentAction(Action):
-    phase = Phase.CHOOSE_OUT_OF_ORDER_PRESIDENT
+    phase: Phase = Phase.CHOOSE_OUT_OF_ORDER_PRESIDENT
     out_of_order_president_index: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class KillAction(Action):
-    phase = Phase.KILL
+    phase: Phase = Phase.KILL
     target_index: int

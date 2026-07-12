@@ -127,7 +127,6 @@ class State:
     def action_kwargs(self) -> dict[str, Any]:
         return {
             "turn": self.turn,
-            "phase": self.phase,
             "player_index": self.self_index,
         }
 
