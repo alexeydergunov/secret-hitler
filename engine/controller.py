@@ -242,13 +242,6 @@ class Controller:
         self.all_states.append(new_state)
         self.all_actions.extend(actions)
 
-        for player_index, player in enumerate(self.players):
-            player.state = self.hide_from_player(
-                source_state=new_state,
-                player_index=player_index,
-                player_role=current_state.roles[player_index],
-            )
-
     @classmethod
     def apply_actions(cls, current_state: State, actions: list[Action]) -> State:
         for action in actions:
