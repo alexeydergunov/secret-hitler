@@ -88,10 +88,9 @@ class Controller:
         cls.choose_next_president(state=state)
         state.current_chancellor = None
         state.previous_president = previous_president
+        state.previous_chancellor = previous_chancellor
         if len(state.alive_players()) <= 5:
-            state.previous_chancellor = None
-        else:
-            state.previous_chancellor = previous_chancellor
+            state.previous_president = None
 
         state.president_choice_cards = None
         state.chancellor_choice_cards = None
@@ -345,6 +344,7 @@ class Controller:
                 action = actions[0]
                 assert isinstance(action, ChancellorVetoAction)
                 print(f"Player {action.player_index} phase {action.phase}, is_veto = {action.is_veto}")
+                assert action.player_index == current_state.current_chancellor
                 assert current_state.chancellor_choice_cards is not None
                 assert len(current_state.chancellor_choice_cards) == 2
 
@@ -359,6 +359,7 @@ class Controller:
                 action = actions[0]
                 assert isinstance(action, PresidentVetoAction)
                 print(f"Player {action.player_index} phase {action.phase}, is_veto = {action.is_veto}")
+                assert action.player_index == current_state.current_president
                 assert current_state.chancellor_choice_cards is not None
                 assert len(current_state.chancellor_choice_cards) == 2
 
@@ -461,6 +462,7 @@ class Controller:
                 print(f"Player {action.player_index} phase {action.phase}, target_index = {action.target_index}")
                 assert action.player_index == current_state.current_president
                 assert action.target_index not in current_state.killed_players
+                assert action.target_index != current_state.current_president
                 for team_claim in current_state.team_claims:
                     assert action.target_index != team_claim.target_index
                 new_state.team_claims.append(TeamClaim(
@@ -500,6 +502,7 @@ class Controller:
                 assert isinstance(action, ChooseOutOfOrderPresidentAction)
                 print(f"Player {action.player_index} phase {action.phase}, "
                       f"out_of_order_president_index = {action.out_of_order_president_index}")
+                assert action.player_index == current_state.current_president
                 assert action.out_of_order_president_index != current_state.current_president
                 assert action.out_of_order_president_index not in current_state.killed_players
                 cls.next_turn(state=new_state)
@@ -511,6 +514,7 @@ class Controller:
                 action = actions[0]
                 assert isinstance(action, KillAction)
                 print(f"Player {action.player_index} phase {action.phase}, target_index = {action.target_index}")
+                assert action.player_index == current_state.current_president
                 assert action.target_index != current_state.current_president
                 assert action.target_index not in current_state.killed_players
                 new_state.killed_players.append(action.target_index)
