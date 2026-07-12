@@ -309,8 +309,6 @@ class Controller:
                         random.shuffle(president_choice_cards)
                         new_state.president_choice_cards = president_choice_cards
                         new_state.deck_size -= 3
-                        if new_state.deck_size <= 2:
-                            cls.reshuffle_deck(state=new_state)
                         new_state.round_skip_count = 0
                 else:
                     cls.round_skip(state=new_state)
@@ -366,6 +364,8 @@ class Controller:
                 if not action.is_veto:
                     new_state.phase = Phase.CHANCELLOR_DISCARD
                 else:
+                    if new_state.deck_size <= 2:
+                        cls.reshuffle_deck(state=new_state)
                     cls.round_skip(state=new_state)
 
             case Phase.CHANCELLOR_DISCARD:
@@ -384,6 +384,8 @@ class Controller:
                 assert len(remained_cards) == 1
                 new_law = remained_cards[0]
                 new_state.accepted_laws.append(new_law)
+                if new_state.deck_size <= 2:
+                    cls.reshuffle_deck(state=new_state)
 
                 if new_state.liberal_score() == 5:
                     new_state.winner_team = Team.LIBERAL
