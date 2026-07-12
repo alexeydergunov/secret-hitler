@@ -1,5 +1,6 @@
 import dataclasses
 from enum import Enum
+from typing import Any
 
 
 class EnumParent(Enum):
@@ -122,6 +123,13 @@ class State:
     deck_claim: DeckClaim | None
     winner_team: Team | None
     win_reason: WinReason | None
+
+    def action_kwargs(self) -> dict[str, Any]:
+        return {
+            "turn": self.turn,
+            "phase": self.phase,
+            "player_index": self.self_index,
+        }
 
     def liberal_score(self) -> int:
         return len([x for x in self.accepted_laws if x == LawType.BLUE])

@@ -39,12 +39,7 @@ class DummyPlayer(Player):
     def action(self, state: State) -> Action:
         assert state.self_index is not None
         assert isinstance(state.self_index, int)
-
-        action_kwargs: dict[str, Any] = {
-            "turn": state.turn,
-            "phase": state.phase,
-            "player_index": state.self_index,
-        }
+        action_kwargs: dict[str, Any] = state.action_kwargs()
 
         match state.phase:
             case Phase.CHOOSE_CHANCELLOR:
